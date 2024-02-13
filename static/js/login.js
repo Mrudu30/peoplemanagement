@@ -58,14 +58,10 @@ $(document).ready(function(){
     }
 
     function validate_password(){
-        var regex = /^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[@#$%^&+=]).{8,}$/
         var pwd = $("#pwd")
         var pwd_help =$("#pwd_help")
         if(pwd.val().trim() === ""){
-            pwd_help.addClass('text-danger capitalize-text').text("dont leave the field empty")
-            return false
-        }else if(!regex.test(pwd.val())){
-            pwd_help.addClass('text-danger capitalize-text').text("password must contain: 8 characters, 1 sp. character, 1 uppercase character, 1 lowercase character & a number")
+            pwd_help.addClass('text-danger capitalize-text').text("password field cannot be empty")
             return false
         }
         else{

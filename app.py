@@ -112,7 +112,7 @@ def deletePerson():
 def loginPerson():
 
     if request.method == 'POST':
-        print(request.form)
+        # print(request.form)
         data = request.form
         # mail = request.form.get('email')
         # print(mail)

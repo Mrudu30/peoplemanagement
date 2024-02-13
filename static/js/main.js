@@ -19,10 +19,9 @@ $(document).ready(function(){
         title: 'Add Person',
         buttons: {
             "Close": function() {
-                $('#peopleform')[0].reset();
+                $('#peopleform').trigger('reset');
                 $(this).dialog("close");
-                formdiv.dialog('close')
-                getPeople()
+                getPeople();
             }
         },
         open: function (event, ui) {
@@ -64,15 +63,14 @@ $(document).ready(function(){
         var regex = /^[a-zA-Z]+$/
         var fname = $('#fname')
         var fname_help = $('#fname_help')
-        if(!regex.test(fname.val())){
-            fname_help.addClass('text-danger capitalize-text').text("only characters in this field")
-            return false
-        }
-        else if(fname.val().trim() == ""){
+
+        if(fname.val().trim() == ""){
             fname_help.addClass('text-danger capitalize-text').text("dont leave the field empty")
             return false
-        }
-        else{
+        }else if(!regex.test(fname.val())){
+            fname_help.addClass('text-danger capitalize-text').text("only characters in this field")
+            return false
+        }else{
             fname_help.removeClass('text-danger capitalize-text').text("")
             return true
         }
@@ -218,8 +216,8 @@ $(document).ready(function(){
         var regex = /^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[@#$%^&+=]).{8,}$/
         var pwd = $("#pwd")
         var pwd_help =$("#pwd_help")
-        if(pwd.val() === ""){
-            pwd_help.addClass('text-danger capitalize-text').text("dont leave the field empty")
+        if(pwd.val().trim() === ""){
+            pwd_help.addClass('text-danger capitalize-text').text("password field cannot be empty")
             return false
         }
         else if(!regex.test(pwd.val())){
@@ -249,7 +247,6 @@ $(document).ready(function(){
 
     form.submit(function(event){
         event.preventDefault();
-        // console.log(validate_fname() , validate_lname() , validate_email() , validate_mobno() , validate_gender() , validate_hobbies() , validate_country() , validate_addr(), email_check(), validate_password())
         switchValue()
         if (validate_fname() && validate_lname() && validate_email() && validate_mobno() && validate_gender() && validate_hobbies() && validate_country() && validate_password() && validate_addr())
         {
@@ -289,7 +286,7 @@ $(document).ready(function(){
         }
         else{
             console.log("Errors Present")
-            console.log(validate_fname() , validate_lname() , validate_email() , validate_mobno() , validate_gender() , validate_hobbies() , validate_country() , validate_addr())
+            console.log(validate_fname() , validate_lname() , validate_email() , validate_mobno() , validate_gender() , validate_hobbies() , validate_country() , validate_addr(), validate_password())
         }
     })
 })
