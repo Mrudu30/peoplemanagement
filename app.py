@@ -1,12 +1,14 @@
-from flask import Flask,redirect,url_for,render_template,request,jsonify
+from flask import Flask,redirect,url_for,render_template,request,jsonify,session
 from module import database
+import json
 
 app=Flask(__name__)
 app.secret_key = 'thefourthwall'
 db = database.Database()
+au = database.Authentication()
 
 # ---------- Main Home Page ------------
-@app.route('/',methods=['GET','POST'])
+@app.route('/home',methods=['GET','POST'])
 def home():
     if request.method=='POST':
         return render_template('index.html')
@@ -28,6 +30,22 @@ def getPeople():
     except Exception as e:
         print(e)
         return jsonify({"error": "An error occurred while retrieving people data"})
+
+# ----------- Duplicate Email Check -------------
+@app.route("/emailCheck",methods=['POST'])
+def emailCheck():
+    data = request.form
+    print(data)
+    try:
+        if db.emailcheck(data) == True:
+            message = "Email Taken"
+            return jsonify({'status': False, 'message': message})
+        else:
+            message = "New email"
+            return jsonify({'status': True, 'message': message})
+    except Exception as e:
+        print(e)
+        return jsonify({'status': False, 'message': 'An error occurred'})
 
 # ----------- Search Filter Function -------------
 @app.route("/searchFilter",methods=['POST'])
@@ -61,7 +79,7 @@ def updatePerson():
         data = request.form
         hobb = request.form.getlist('hobby')
         hobb_str = ','.join(hobb)
-        print(data,hobb_str)
+        # print(data,hobb_str)
         if db.updatePerson(data=data,hobb_str=hobb_str):
             message = "Person Updated"
             return message
@@ -73,7 +91,7 @@ def updatePerson():
 @app.route("/updateStatus",methods=['POST','GET'])
 def updateStatus():
     data = request.form
-    print(data)
+    # print(data)
     if db.updateStatus(data):
         message = 'Status Updated'
         return message
@@ -88,6 +106,31 @@ def deletePerson():
     db.deleteUser(user_id)
     message ="user deleted successfully"
     return message
+
+# -------------- Login -----------------
+@app.route("/",methods=['GET','POST'])
+def loginPerson():
+
+    if request.method == 'POST':
+        print(request.form)
+        data = request.form
+        # mail = request.form.get('email')
+        # print(mail)
+        reply = au.authenticate(data)
+        if reply[0] == True:
+            # session['user'] = mail
+            # print('session start')
+            return json.dumps({'status':'success','message':reply[1]})
+        else:
+            return json.dumps({'status':'error','message':reply[1]})
+
+    return render_template('login.html')
+
+@app.route('/logout')
+def logout():
+    session.clear()
+    return redirect(url_for('loginPerson'))
+
 
 if __name__ == '__main__':
     #DEBUG is SET to TRUE. CHANGE FOR PROD

@@ -34,8 +34,8 @@ class Database:
             statusval = 'Inactive'
 
         try:
-            query = f"INSERT INTO people (fname,lname,email,mobno,gender,hobbies,country,address,status) values (%s,%s,%s,%s,%s,%s,%s,%s,%s)"
-            values = (data['fname'],data['lname'],data['email'],data['mobno'],data['gender'],hobb_str,data['country'],data['address'],statusval)
+            query = f"INSERT INTO people (fname,lname,email,mobno,gender,hobbies,country,address,status,role,password) values (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)"
+            values = (data['fname'],data['lname'],data['email'],data['mobno'],data['gender'],hobb_str,data['country'],data['address'],statusval,data['role'],data['password'])
             # print(cur.mogrify(query,values))
             cur.execute(query,values)
             conn.commit()
@@ -51,8 +51,8 @@ class Database:
         cur = conn.cursor()
 
         try:
-            query = f"UPDATE people SET fname=%s, lname=%s, email=%s, mobno=%s, gender=%s, hobbies=%s, country=%s, address=%s, status=%s WHERE id=%s"
-            values = (data['fname'], data['lname'], data['email'], data['mobno'], data['gender'],hobb_str,data['country'],data['address'],data['status'],data['id'])
+            query = f"UPDATE people SET fname=%s, lname=%s, email=%s, mobno=%s, gender=%s, hobbies=%s, country=%s, address=%s, status=%s, role=%s, password=%s WHERE id=%s"
+            values = (data['fname'], data['lname'], data['email'], data['mobno'], data['gender'],hobb_str,data['country'],data['address'],data['status'],data['role'],data['password'],data['id'])
             # print(cur.mogrify(query,values))
             cur.execute(query,values)
             conn.commit()
@@ -122,4 +122,72 @@ class Database:
             conn.rollback()
             return False
         finally:
+            conn.close()
+
+    def emailcheck(self,data):
+        conn = Database.connect(self)
+        cur = conn.cursor()
+
+        try:
+            query = f"SELECT * FROM people WHERE email='{data['email']}'"
+            cur.execute(query)
+            result = cur.fetchone()
+            print(query)
+            if result:
+                return True
+            else:
+                return False
+        except:
+            print('rooled back')
+            conn.rollback()
+            return False
+        finally:
+            conn.close()
+
+# -------------- Authentication Functions ----------------
+class Authentication:
+    def authenticate(self, data):
+        conn = Database.connect(self)
+        cur = conn.cursor()
+
+        email = data['email']
+        password1 = data['pwd']
+
+        try:
+            # Use parameterized query to prevent SQL injection
+
+            cur.execute("SELECT password,role,status FROM people WHERE email = %s", (email,))
+
+            # Fetch the result
+            result = cur.fetchone()
+            # print(result)
+
+            if result:
+                if result[1] == 'admin':
+                    if result[2] == 'Active':
+                        # Get the password from the result
+                        password_from_db = result[0]
+
+                        # Compare passwords
+                        if password1 == password_from_db:
+                            message = "user successfully logged in"
+                            return True,message
+                        else:
+                            message = "Password is incorrect"
+                            return False,message
+                    else:
+                        message = "Admin is inactive"
+                        return False,message
+                else:
+                    message = "Only admin can login"
+                    return False,message
+            else:
+                message = "no such user found"
+                return False,message
+
+        except Exception as e:
+            print(f"Authentication error: {e}")
+
+        finally:
+            cur.close()
             conn.close()

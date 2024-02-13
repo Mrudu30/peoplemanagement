@@ -19,7 +19,10 @@ $(document).ready(function(){
         title: 'Add Person',
         buttons: {
             "Close": function() {
+                $('#peopleform')[0].reset();
                 $(this).dialog("close");
+                formdiv.dialog('close')
+                getPeople()
             }
         },
         open: function (event, ui) {
@@ -41,6 +44,7 @@ $(document).ready(function(){
     $(".hobb").blur(validate_hobbies)
     $("#country").blur(validate_country)
     $("#addr").blur(validate_addr)
+    $('#pwd').blur(validate_password)
 
     $("#fname").keyup(validate_fname)
     $("#lname").keyup(validate_lname)
@@ -50,6 +54,10 @@ $(document).ready(function(){
     $(".hobb").keyup(validate_hobbies)
     $("#country").keyup(validate_country)
     $("#addr").keyup(validate_addr)
+    $('#pwd').keyup(validate_password)
+
+    $("#email").blur(email_check)
+    $("#email").keyup(email_check)
 
     // ---------- Validation Functions -----------
     function validate_fname(){
@@ -60,7 +68,7 @@ $(document).ready(function(){
             fname_help.addClass('text-danger capitalize-text').text("only characters in this field")
             return false
         }
-        else if(fname.val().trim() === ""){
+        else if(fname.val().trim() == ""){
             fname_help.addClass('text-danger capitalize-text').text("dont leave the field empty")
             return false
         }
@@ -92,18 +100,50 @@ $(document).ready(function(){
         var regex = /^[_a-z_A-Z0-9-]+(\.[_a-z0-9-]+)*@[a-z0-9-]+(\.[a-z0-9-]+)*(\.[a-z]{2,3})$/
         var email = $('#email')
         var email_help = $('#email_help')
-        if(!regex.test(email.val())){
-            email_help.addClass('text-danger capitalize-text').text("enter valid email")
+
+        if(email.val().trim() === ""){
+            email_help.addClass('text-danger capitalize-text').text("dont leave the field empty")
             return false
         }
-        else if(email.val().trim() === ""){
-            email_help.addClass('text-danger capitalize-text').text("dont leave the field empty")
+        else if(!regex.test(email.val())){
+            email_help.addClass('text-danger capitalize-text').text("enter valid email")
             return false
         }
         else{
             email_help.removeClass('text-danger capitalize-text').text("")
             return true
         }
+    }
+
+    function email_check(){
+        var email = $('#email')
+        var emailtaken_help = $("#emailtaken_help")
+        if (validate_email()){
+        $.ajax({
+            url:'/emailCheck',
+            type:'POST',
+            data: {'email': email.val().trim()},
+            success: function(response){
+                var isSuccess = response.status;
+                var message = response.message;
+
+                if (isSuccess) {
+                    // Handle success case
+                    emailtaken_help.removeClass('text-danger capitalize-text').text("")
+                    console.log('Email is available:', message);
+                    return true
+                } else {
+                    // Handle failure case
+                    emailtaken_help.addClass('text-danger capitalize-text').text(message)
+                    console.log('Email is taken:', message);
+                    return false
+                }
+            },
+            error: function (error) {
+                console.log(error)
+                return false
+             }
+        })}
     }
 
     function validate_mobno(){
@@ -151,8 +191,8 @@ $(document).ready(function(){
     function validate_country(){
         var country = $('#country')
         var country_help = $('#country_help')
-        if(country.val().trim() === ""){
-            country_help.addClass('text-danger capitalize-text').text("choose a country")
+        if(country.val() === ""){
+            country_help.text("choose a country").addClass('text-danger capitalize-text')
             return false
         }
         else{
@@ -174,6 +214,24 @@ $(document).ready(function(){
         }
     }
 
+    function validate_password(){
+        var regex = /^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[@#$%^&+=]).{8,}$/
+        var pwd = $("#pwd")
+        var pwd_help =$("#pwd_help")
+        if(pwd.val() === ""){
+            pwd_help.addClass('text-danger capitalize-text').text("dont leave the field empty")
+            return false
+        }
+        else if(!regex.test(pwd.val())){
+            pwd_help.addClass('text-danger capitalize-text').text("password must contain: 8 characters, 1 sp. character, 1 uppercase character, 1 lowercase character & a number")
+            return false
+        }
+        else{
+            pwd_help.removeClass('text-danger capitalize-text').text("")
+            return true
+        }
+    }
+
     // ---------- Status Switch Check -------------
     function switchValue(){
         var statusSwitch = $('.statusSwitch')
@@ -191,8 +249,9 @@ $(document).ready(function(){
 
     form.submit(function(event){
         event.preventDefault();
+        // console.log(validate_fname() , validate_lname() , validate_email() , validate_mobno() , validate_gender() , validate_hobbies() , validate_country() , validate_addr(), email_check(), validate_password())
         switchValue()
-        if (validate_fname() && validate_lname() && validate_email() && validate_mobno() && validate_gender() && validate_hobbies() && validate_country() && validate_addr())
+        if (validate_fname() && validate_lname() && validate_email() && validate_mobno() && validate_gender() && validate_hobbies() && validate_country() && validate_password() && validate_addr())
         {
             if($('#form-type').val()=='createform'){
                 $.ajax({
@@ -334,6 +393,9 @@ function updatePerson(id){
             $("#lname").val(response[2])
             $("#email").val(response[3])
             $("#mobno").val(response[4])
+            $("#pwd").val(response[11])
+            $("#addr").val(response[8])
+            $("#role").val(response[10])
 
             if (response[5] == 'Male'){
                 $('#genm').prop("checked",true)
@@ -344,7 +406,7 @@ function updatePerson(id){
 
             var hobbies_str = response[6]
             var hobbies = hobbies_str.split(',')
-            console.log(hobbies)
+            // console.log(hobbies)
             for (i=0;i<hobbies.length;i++){
                 if (hobbies[i]==$('#hobb1').val()){
                     $('#hobb1').prop('checked',true)
@@ -380,7 +442,13 @@ function updatePerson(id){
                 $("#cntry5").prop('selected',true)
             }
 
-            $("#addr").val(response[8])
+            if (response[9]=="Active")
+            {
+                $("#statusSwitch").prop('checked',true)
+            }
+            else{
+                $("#statusSwitch").prop('checked',false)
+            }
 
         }
     })
