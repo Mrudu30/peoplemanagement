@@ -273,7 +273,7 @@ $(document).ready(function(){
                     data:form.serialize(),
                     success:function(response){
                         console.log(response)
-                        form[0].reset();
+                        $('#peopleform').trigger('reset');
                         formdiv.dialog('close')
                         getPeople()
                         messageShow(response)
@@ -376,6 +376,7 @@ function updatePerson(id){
                 title: 'Update Person',
                 buttons: {
                     "Close": function() {
+                        $('#peopleform').trigger('reset');
                         $(this).dialog("close");
                     }
                 },
